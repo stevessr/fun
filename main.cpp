@@ -4,6 +4,7 @@ int main()
     introduction();
     mode_get();
     action();
-    system("pause");
+    thanks();
+    after_finish();
     return 0;
 }
