@@ -11,6 +11,7 @@
 const short chance = 6;
 const short max_member = 10;
 extern int consoleWidth, consoleHeight;
+const int max_target = 1000;
 
 extern int mems;
 
@@ -20,6 +21,14 @@ auto safe_delete = [](void *ptr, bool is_calculation)
         return;
     is_calculation ? delete static_cast<calulation *>(ptr)
                    : delete static_cast<int *>(ptr);
+};
+
+auto get_custom_string = [](void *ptr, bool is_calculation) -> std::string
+{
+    if (!ptr)
+        return "";
+    return is_calculation ? static_cast<calulation *>(ptr)->get_string()
+                          : std::to_string(*static_cast<int *>(ptr));
 };
 
 bool calulation::random()
@@ -49,7 +58,7 @@ bool calulation::random()
         result = getleftValue() + getrightValue();
         break;
     }
-    if (result > 1000 || result < -1000)
+    if (result > max_target || result < -max_target)
     {
         random();
     }
@@ -65,27 +74,49 @@ bool calulation::random(std::string oper)
     right = new int(rand() % 1000);
     leftIsCalculation = false;
     left = new int(rand() % 1000);
-    if (oper == "+")
+    if (oper == "1")
     {
         op = '+';
         result = getleftValue() + getrightValue();
     }
-    else if (oper == "-")
+    else if (oper == "3")
     {
         op = '-';
         result = getleftValue() - getrightValue();
     }
-    else if (oper == "*")
+    else if (oper == "3")
     {
         op = '*';
         result = getleftValue() * getrightValue();
     }
-    else if (oper == "/")
+    else if (oper == "4")
     {
 
         op = '/';
         result = getleftValue() / getrightValue();
     }
+    else
+    {
+        random();
+    }
+    return true;
+}
+
+bool calulation::random(int max)
+{
+    do
+    {
+        random();
+    } while (result > max || result < -max);
+    return true;
+}
+
+bool calulation::random(std::string oper, int max)
+{
+    do
+    {
+        random(oper);
+    } while (result > max || result < -max);
     return true;
 }
 
@@ -221,7 +252,7 @@ long double calulation::getleftValue()
     }
     else
     {
-        return *((int *)left);
+        return static_cast<long double>(*((int *)left));
     }
 }
 
@@ -233,7 +264,7 @@ long double calulation::getrightValue()
     }
     else
     {
-        return *((int *)right);
+        return static_cast<long double>(*((int *)right));
     }
 }
 
@@ -267,4 +298,14 @@ void calulation::random_right()
         rightIsCalculation = false;
         right = new int(rand() % 1000);
     }
+}
+
+int calulation::get_result()
+{
+    return static_cast<int>(result);
+}
+
+std::string calulation::get_string() const
+{
+    return get_custom_string(left, leftIsCalculation) + op + get_custom_string(right, rightIsCalculation);
 }

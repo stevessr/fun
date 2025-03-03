@@ -14,6 +14,8 @@ public:
     void output(std::ostream &os, int parentPriority) const;
     bool random();
     bool random(std::string oper);
+    bool random(int max);
+    bool random(std::string oper,int max);
     void printline(std::ostream &os);
     calulation(int ileft, char iop, int iright);
     calulation(calulation ileft, char iop, calulation iright);
@@ -24,6 +26,8 @@ public:
     long double getrightValue();
     void random_left();
     void random_right();
+    int get_result();
+    std::string get_string() const;
     
 
 private:

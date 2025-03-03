@@ -11,6 +11,7 @@ calulation c;
 short mode = 0;
 short op_type = 0;
 string temp = "";
+string save = "";
 int mems;
 int consoleWidth, consoleHeight;
 int input = 0;
@@ -29,6 +30,10 @@ void waiting()
     system("pause");
 }
 
+void print_line(string str)
+{
+    cout << setw(consoleWidth - 1) << left << "*" + str << "*" << endl;
+}
 void introduction()
 {
     c.printline(cout);
@@ -133,7 +138,7 @@ void game()
         cout << setw(consoleWidth - 1) << left << "*耗时: " + to_string(duration) + "毫秒" << "*" << endl;
         temps = stringstream(temp);
         temps >> input;
-        if (input == int16_t(c.result))
+        if (input == c.get_result())
         {
             cout << setw(consoleWidth - 1) << left << "*答案正确" << "*" << endl;
             cout << "*";
@@ -189,7 +194,8 @@ void pratise()
         mode = -1;
         return;
     }
-    long long towait, tars;
+    long long towait;
+    long tars;
     cout << "*你想做几题：";
     auto start = std::chrono::high_resolution_clock::now();
     cin >> towait;
@@ -212,11 +218,14 @@ void pratise()
     waiting();
     c.printline(cout);
     srand(static_cast<unsigned int>(duration) % 65535);
-    long long a = 0;
+    long a = 0;
+    save = temp;
+    vector<string> wrong;
+    wrong.empty();
     while (towait--)
     {
         c.printline(cout);
-        c.random(temp);
+        c.random(save);
         cout << "*";
         cout << c;
         cout << "=" << endl;
@@ -228,24 +237,32 @@ void pratise()
         cout << setw(consoleWidth - 1) << left << "*耗时: " + to_string(duration) + "毫秒" << "*" << endl;
         temps = stringstream(temp);
         temps >> input;
-        if (input == int(c.result))
-        {
-            cout << setw(consoleWidth - 1) << left << "*答案正确" << "*" << endl;
-            a++;
-        }
-        else if (temp == "q")
+        if (temp == "q")
         {
             mode = -1;
             break;
         }
+        else if (input == c.get_result())
+        {
+
+            cout << setw(consoleWidth - 1) << left << "*答案正确" << "*" << endl;
+            a++;
+        }
         else
         {
             cout << setw(consoleWidth - 1) << left << "*答案错误，正确答案" + to_string(int(c.result)) << "*" << endl;
+            wrong.push_back(c.get_string());
         }
     }
     c.printline(cout);
     cout << setw(consoleWidth - 1) << left << "*累计成功" + to_string(a) + "次" << "*" << endl;
     cout << setw(consoleWidth - 1) << left << "*成功率" + to_string(a * 1.0 / tars) + "%" << "*" << endl;
+    cout << setw(consoleWidth - 1) << left << "总共" + to_string(tars) + "题" << "*" << endl;
+    c.printline(cout);
+    print_line("以下是错题");
+    for(auto &i:wrong){
+        print_line(i);
+    }
     after_finish();
 }
 
