@@ -4,133 +4,199 @@
 #include <string>
 #include <sstream>
 #include "caculator.h"
+#include "ui.cpp"
 
 using namespace std;
 
 calulation c;
-short mode = 0;
-short op_type = 0;
 string temp = "";
 string save = "";
+string pass = "";
 int mems;
-int consoleWidth, consoleHeight;
 int input = 0;
 stringstream temps;
-short pass = 0;
+short ensure_int = 0;
+short mode = 0;
 
-void after_finish()
-{
-    cout << "*";
-    system("pause");
-    system("cls");
-}
-void waiting()
-{
-    cout << "*";
-    system("pause");
-}
-
-void print_line(string str)
-{
-    cout << setw(consoleWidth - 1) << left << "*" + str << "*" << endl;
-}
 void introduction()
 {
-    c.printline(cout);
-    cout << setw(consoleWidth - 1) << left << "*欢迎来到小学运算练习器" << "*" << endl
-         << setw(consoleWidth - 1) << left << "*本程序由C++驱动" << "*" << endl
-         << setw(consoleWidth - 1) << left << "*功能：可以进行加、减、乘、除运算练习、四则混合运算" << "*" << endl
-         << setw(consoleWidth - 1) << left << "*练习方法：游戏型、普通练习型" << "*" << endl;
+    printline();
+    print_line("欢迎来到小学运算练习器");
+    print_line("本程序由C++驱动");
+    print_line("功能：可以进行加、减、乘、除运算练习、四则混合运算");
+    print_line("练习方法：游戏型、普通练习型");
 }
 
 void mode_get()
 {
-    c.printline(cout);
-    cout << setw(consoleWidth - 1) << left << "*请选择练习模式：" << "*" << endl
-         << setw(consoleWidth - 1) << left << "*1.游戏型" << "*" << endl
-         << setw(consoleWidth - 1) << left << "*2.普通练习型" << "*" << endl;
-    cout << "*你的选择是(输入0退出游戏)：";
-    cin >> temp;
-    while (temp != "1" && temp != "2" && temp != "0")
+    short action = 1;
+    auto action1 = [&action]()
     {
-        cout << "*输入错误，请重新输入：";
+        printline();
+        print_line("请选择练习模式：");
+        print_line("1.游戏型");
+        print_line("2.普通练习型");
+        input_line("你的选择是(输入0退出游戏)：");
         cin >> temp;
-    }
-    pass = 0;
-    while (pass != 1)
+        action = 2;
+    };
+    auto action2 = [&action]()
     {
-        cout << "*你确定嘛?(输入1确定,2反悔)";
-        cin >> pass;
-        while (pass == 2)
+        while (temp != "1" && temp != "2" && temp != "0")
         {
-            cout << "*你的选择是(输入0退出游戏)：";
+            input_line("输入错误，请重新输入：");
             cin >> temp;
-            while (temp != "1" && temp != "2" && temp != "0")
+        }
+        action = 3;
+    };
+    auto action3 = [&action]()
+    {
+        pass = "";
+        input_line("你确定嘛?(输入1确定,2反悔)");
+        cin >> pass;
+        if (pass == "1")
+        {
+            action = 4;
+        }
+        else if (pass == "2")
+        {
+            action = 1;
+        }
+        else
+        {
+            while (pass != "1" && pass != "2")
             {
-                cout << "*输入错误，请重新输入：";
-                cin >> temp;
+                input_line("输入错误，请重新输入：");
+                cin >> pass;
             }
-            cout << "*你确定嘛?(输入1确定,2反悔)";
-            cin >> pass;
+        }
+    };
+    auto action4 = [&action]()
+    {
+        if (temp == "1")
+        {
+            mode = 1;
+            print_line("游戏模式已开启");
+        }
+        else if (temp == "2")
+        {
+            mode = 0;
+            print_line("普通练习模式已开启");
+        }
+        else
+        {
+            mode = -1;
+        }
+        action = 5;
+    };
+    while (action < 5)
+    {
+        switch (action)
+        {
+        case 1:
+            action1();
+            break;
+        case 2:
+            action2();
+            break;
+        case 3:
+            action3();
+            break;
+        case 4:
+            action4();
+            break;
+        default:
+            action = 1;
+            break;
         }
     }
-    if (temp == "1")
-    {
-        mode = 1;
-        cout << setw(consoleWidth - 1) << left << "*游戏模式已开启" << "*" << endl;
-    }
-    else if (temp == "2")
-    {
-        mode = 0;
-        cout << setw(consoleWidth - 1) << left << "*普通练习模式已开启" << "*" << endl;
-    }
-    else
-    {
-        mode = -1;
-    }
-    c.printline(cout);
 }
 
 void game()
 {
-    cout << setw(consoleWidth - 1) << left << "*你已进入游戏模式" << "*" << endl;
+    short action = 1;
+    auto action1 = [&action]()
+    {
+        printline();
+        print_line("你已进入游戏模式");
+        action = 2;
+    };
+
     double towait = 0;
-    cout << "*请输入每道题的限时（单位:秒）：";
+
     auto start = std::chrono::high_resolution_clock::now();
     cin >> towait;
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    pass = 0;
-    while (pass != 1)
+    auto action2 = [&action, &start, &end, &duration, &towait]()
     {
-        cout << "*你确定嘛?(输入1确定,2反悔)";
-        cin >> pass;
-        while (pass == 2)
-        {
-            cout << "*请输入每道题的限时（单位:秒）：";
-            cin >> towait;
-            cout << "*你确定嘛?(输入1确定,2反悔)";
-            cin >> pass;
-        }
-    }
-    while (towait == 0)
-    {
-        cout << "*输入有误，请重新输入：";
+        input_line("请输入每道题的限时（单位:秒）：");
+        start = std::chrono::high_resolution_clock::now();
         cin >> towait;
-    }
-    cout << setw(consoleWidth - 1) << left << "*无尽闯关即将开始" << "*" << endl;
-    waiting();
-    c.printline(cout);
-    srand(static_cast<unsigned int>(duration) % 65535);
+        end = chrono::high_resolution_clock::now();
+        duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        action = 3;
+    };
+
+    auto action3 = [&action, &towait]()
+    {
+        while (towait == 0)
+        {
+            input_line("输入有误，请重新输入：");
+            cin >> towait;
+        }
+        action = 4;
+    };
+
+    auto action4 = [&action]()
+    {
+        input_line("你确定嘛?(输入1确定,2反悔)");
+        cin >> pass;
+        if (pass == "1")
+        {
+            action = 5;
+        }
+        else if (pass == "2")
+        {
+            action = 2;
+        }
+        else
+        {
+            while (pass != "1" && pass != "2")
+            {
+                input_line("输入错误，请重新输入：");
+                cin >> pass;
+            }
+            if (pass == "1")
+            {
+                action = 5;
+            }
+            else if (pass == "2")
+            {
+                action = 2;
+            }
+        }
+    };
+
+    auto action5 = [&duration, &action]()
+    {
+        print_line("无尽闯关即将开始");
+        waiting();
+        printline();
+        srand(static_cast<unsigned int>(duration) % 65535);
+        action = 6;
+    };
+
     long long a = 0;
-    while (true)
+
+    auto action6 = [&start, &end, &duration, &action]()
     {
         mems = 1;
         c.random();
         cout << "*";
         cout << c;
         cout << "=" << endl;
-        cout << "*请输入答案(取整数部分)：";
+        input_line("请输入答案(取整数部分)：");
         start = std::chrono::high_resolution_clock::now();
         cin >> temp;
         end = chrono::high_resolution_clock::now();
@@ -138,149 +204,435 @@ void game()
         cout << setw(consoleWidth - 1) << left << "*耗时: " + to_string(duration) + "毫秒" << "*" << endl;
         temps = stringstream(temp);
         temps >> input;
+        action = 7;
+    };
+
+    auto action7 = [&a, &duration, &towait, &action]()
+    {
         if (input == c.get_result())
         {
-            cout << setw(consoleWidth - 1) << left << "*答案正确" << "*" << endl;
+            print_line("答案正确");
             cout << "*";
             system("pause");
-            system("cls");
+            clear_screen();
+            action = 7;
         }
         else
         {
-            cout << setw(consoleWidth - 1) << left << "*答案错误，游戏终止，正确答案" + to_string(int(c.result)) << "*" << endl;
-            break;
+            print_line("答案错误，游戏终止，正确答案为" + to_string(int(c.result)));
+            action = 8;
         }
         if (duration > 1000 * towait)
         {
-            cout << setw(consoleWidth - 1) << left << "*超时，游戏终止" << "*" << endl;
+            print_line("超时，游戏终止");
+            action = 8;
+        }
+        printline();
+        a++;
+    };
+
+    auto action8 = [&a, &action]()
+    {
+        print_line("累计成功" + to_string(a) + "次");
+        after_finish();
+        action = 9;
+    };
+
+    while (action < 9)
+    {
+        switch (action)
+        {
+        case 1:
+            action1();
+            break;
+        case 2:
+            action2();
+            break;
+        case 3:
+            action3();
+            break;
+        case 4:
+            action4();
+            break;
+        case 5:
+            action5();
+            break;
+        case 6:
+            action6();
+            break;
+        case 7:
+            action7();
+            break;
+        case 8:
+            action8();
+            break;
+        default:
+            action = 1;
             break;
         }
-        c.printline(cout);
-        a++;
     }
-    cout << setw(consoleWidth - 1) << left << "*累计成功" + to_string(a) + "次" << "*" << endl;
-    after_finish();
 }
 
 void pratise()
 {
-    cout << "*请选择你想做的题目类型（1、加法，2、减法，3、乘法，4、除法，5、混合，q、退出）：";
-    cin >> temp;
-    pass = 0;
-    while (pass != 1)
+    short action = 1;
+    auto action1 = [&action]()
     {
-        cout << "*你确定嘛?(输入1确定,2反悔)";
-        cin >> pass;
-        while (pass == 2)
-        {
-            cout << "*请选择你想做的题目类型（1、加法，2、减法，3、乘法，4、除法，5、混合，q、退出）：";
-            cin >> temp;
-            while (temp != "5" && temp != "4" && temp != "3" && temp != "2" && temp != "1" && temp != "q")
-            {
-                cout << "*输入错误，请重新输入:" << endl;
-                cin >> temp;
-            }
-            cout << "*你确定嘛?(输入1确定,2反悔)";
-            cin >> pass;
-        }
-    }
-    while (temp != "5" && temp != "4" && temp != "3" && temp != "2" && temp != "1" && temp != "q")
-    {
-        cout << "*输入错误，请重新输入:" << endl;
+        printline();
+        input_line("请选择你想做的题目类型（1、加法，2、减法，3、乘法，4、除法，5、混合，q、退出）：");
         cin >> temp;
-    }
-    if (temp == "q")
+        action = 2;
+    };
+
+    auto action2 = [&action]()
     {
-        mode = -1;
-        return;
-    }
-    long long towait;
-    long tars;
-    cout << "*你想做几题：";
-    auto start = std::chrono::high_resolution_clock::now();
-    cin >> towait;
-    auto end = chrono::high_resolution_clock::now();
-    pass = 0;
-    while (pass != 1)
-    {
-        cout << "*你确定嘛?(输入1确定,2反悔)";
-        cin >> pass;
-        while (pass == 2)
+        while (temp != "5" && temp != "4" && temp != "3" && temp != "2" && temp != "1" && temp != "q")
         {
-            cout << "*你想做几题：";
-            cin >> towait;
-            cout << "*你确定嘛?(输入1确定,2反悔)";
+            input_line("输入错误，请重新输入:");
+            cin >> temp;
+        }
+        action = 3;
+    };
+
+    auto action3 = [&action]()
+    {
+        input_line("你确定嘛?(输入1确定,2反悔)");
+        cin >> pass;
+        action = 4;
+    };
+
+    auto action4 = [&action]()
+    {
+        if (pass == "1")
+        {
+            action = 5;
+        }
+        else if (pass == "2")
+        {
+            if (ensure_int == 0)
+            {
+                action = 1;
+            }
+            else
+            {
+                action = 5;
+            }
+        }
+        else
+        {
+            input_line("输入错误，请重新输入:");
             cin >> pass;
         }
-    }
-    tars = towait;
-    auto duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    waiting();
-    c.printline(cout);
-    srand(static_cast<unsigned int>(duration) % 65535);
-    long a = 0;
-    save = temp;
-    vector<string> wrong;
-    wrong.empty();
-    while (towait--)
+    };
+    auto action5_2 = [&action]()
     {
-        c.printline(cout);
-        c.random(save);
+        if (temp == "4" || temp == "5" && ensure_int == 0)
+        {
+            string str;
+            input_line("是否开启除法保底（保证除法一定整除）（1、是，2、否）:");
+            cin >> str;
+            if (str == "1")
+            {
+                ensure_int = 1;
+            }
+            else if (str == "2")
+            {
+                ensure_int = 2;
+            }
+            else
+            {
+                input_line("输入错误，请重新输入:");
+                cin >> str;
+            }
+            action = 3;
+        }
+    };
+    auto action5 = [&action, &action5_2]()
+    {
+        if (temp == "q")
+        {
+            mode = -1;
+            action = 128;
+            return;
+        }
+        action = 6;
+    };
+
+    long towait;
+    long tars;
+    auto start = std::chrono::high_resolution_clock::now();
+    auto end = chrono::high_resolution_clock::now();
+
+    auto action6 = [&action, &towait, &start, &end, &tars]()
+    {
+        input_line("你想做几题：");
+        start = std::chrono::high_resolution_clock::now();
+        cin >> towait;
+        end = chrono::high_resolution_clock::now();
+        action = 7;
+        tars = towait;
+    };
+
+    auto action7 = [&action]()
+    {
+        input_line("你确定嘛?(输入1确定,2反悔)");
+        cin >> pass;
+        action = 8;
+    };
+
+    auto action8 = [&action]()
+    {
+        if (pass == "1")
+        {
+            action = 9;
+        }
+        else if (pass == "2")
+        {
+            action = 6;
+        }
+        else
+        {
+            action = 8;
+            input_line("输入错误，请重新输入:");
+            cin >> pass;
+        }
+    };
+
+    auto duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    long a = 0;
+    vector<pair<string, int>> wrong, wrong2;
+    wrong.clear();
+    wrong2.clear();
+
+    auto action9 = [&action, &duration, &end, &start]()
+    {
+        duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        waiting();
+        srand(static_cast<unsigned int>(duration) % 65535);
+        save = temp;
+        action = 10;
+    };
+
+    auto action10 = [&action, &duration, &end, &start]()
+    {
+        printline();
+        if (ensure_int == 1)
+        {
+            c.random(save);
+        }
+        else
+        {
+            c.random(save,2);
+        }
         cout << "*";
         cout << c;
         cout << "=" << endl;
-        cout << "*请输入答案(取整数部分,输入q退出)：";
+        input_line("请输入答案(取整数部分,输入q退出)：");
         start = std::chrono::high_resolution_clock::now();
         cin >> temp;
         end = chrono::high_resolution_clock::now();
         duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        cout << setw(consoleWidth - 1) << left << "*耗时: " + to_string(duration) + "毫秒" << "*" << endl;
+        print_line("*耗时: " + to_string(duration) + "毫秒");
         temps = stringstream(temp);
         temps >> input;
+        action = 11;
+    };
+
+    auto action11 = [&a, &wrong, &action, &towait]()
+    {
         if (temp == "q")
         {
             mode = -1;
-            break;
+            action = 128;
         }
         else if (input == c.get_result())
         {
 
-            cout << setw(consoleWidth - 1) << left << "*答案正确" << "*" << endl;
+            print_line("答案正确");
             a++;
+            action = 10;
+            towait--;
+            if (towait == 0)
+            {
+                action = 12;
+            }
         }
         else
         {
-            cout << setw(consoleWidth - 1) << left << "*答案错误，正确答案" + to_string(int(c.result)) << "*" << endl;
-            wrong.push_back(c.get_string());
+            print_line("答案错误，正确答案为" + to_string(int(c.result)));
+            wrong.push_back({c.get_string(), int(c.result)});
+            action = 12;
         }
-    }
-    c.printline(cout);
-    cout << setw(consoleWidth - 1) << left << "*累计成功" + to_string(a) + "次" << "*" << endl;
-    cout << setw(consoleWidth - 1) << left << "*成功率" + to_string(a * 1.0 / tars) + "%" << "*" << endl;
-    cout << setw(consoleWidth - 1) << left << "总共" + to_string(tars) + "题" << "*" << endl;
-    c.printline(cout);
-    print_line("以下是错题");
-    for(auto &i:wrong){
-        print_line(i);
+    };
+
+    auto action12 = [&a, &action, &tars, &wrong]()
+    {
+        printline();
+        print_line("累计成功" + to_string(a) + "次");
+        print_line("成功率" + to_string(a * 1.0 / tars) + "%");
+        print_line("总共" + to_string(tars) + "题");
+        printline();
+        if (wrong.size() != 0)
+        {
+            print_line("以下是错题");
+            for (auto &i : wrong)
+            {
+                print_line(i.first);
+            }
+        }
+        action = 13;
+    };
+
+    auto action13 = [&action]()
+    {
+        printline();
+        input_line("是否要练习错题（1、是，2、否）：");
+        cin >> temp;
+        action = 14;
+    };
+
+    auto action14 = [&action]()
+    {
+        if (temp == "1")
+        {
+            action = 15;
+        }
+        else if (temp == "2")
+        {
+            action = 128;
+        }
+        else
+        {
+            action = 14;
+            input_line("输入错误，请重新输入:");
+            cin >> temp;
+        }
+    };
+
+    auto action15 = [&action, &wrong, &start, &end, &duration, &wrong2]()
+    {
+        clear_screen();
+        for (int i = 0; i < wrong.size(); i++)
+        {
+            input_line(wrong[i].first);
+            input_line("请输入答案(取整数部分,输入q退出)：");
+            start = std::chrono::high_resolution_clock::now();
+            cin >> temp;
+            end = chrono::high_resolution_clock::now();
+            duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            print_line("*耗时: " + to_string(duration) + "毫秒");
+            temps = stringstream(temp);
+            temps >> input;
+            if (temp == "q")
+            {
+                mode = -1;
+                action = 128;
+                break;
+            }
+            else if (input == c.get_result())
+            {
+
+                print_line("答案正确");
+            }
+            else
+            {
+                print_line("答案错误，正确答案为" + to_string(wrong[i].second));
+                wrong2.push_back({wrong[i].first, wrong[i].second});
+            }
+        }
+        action = 16;
+    };
+
+    auto action16 = [&a, &action, &tars, &wrong2, &wrong]()
+    {
+        printline();
+        if (wrong2.size() != 0)
+        {
+            print_line("以下是剩下的错题");
+            for (auto &i : wrong2)
+            {
+                print_line(i.first);
+            }
+        }
+        action = 13;
+        wrong = wrong2;
+    };
+
+    while (action < 17)
+    {
+        switch (action)
+        {
+        case 1:
+            action1();
+            break;
+        case 2:
+            action2();
+            break;
+        case 3:
+            action3();
+            break;
+        case 4:
+            action4();
+            break;
+        case 5:
+            action5();
+            break;
+        case 6:
+            action6();
+            break;
+        case 7:
+            action7();
+            break;
+        case 8:
+            action8();
+            break;
+        case 9:
+            action9();
+            break;
+        case 10:
+            action10();
+            break;
+        case 11:
+            action11();
+            break;
+        case 12:
+            action12();
+            break;
+        case 13:
+            action13();
+            break;
+        case 14:
+            action14();
+            break;
+        case 15:
+            action15();
+            break;
+        case 16:
+            action16();
+            break;
+
+        default:
+            action = 1;
+            break;
+        }
     }
     after_finish();
 }
 
 void action()
 {
-    system("cls");
-    c.printline(cout);
+
     while (mode != -1)
     {
+        mode_get();
+        clear_screen();
         switch (mode)
         {
         case 1:
             game();
-            mode_get();
             break;
         case 0:
             pratise();
-            mode_get();
             break;
         case -1:
             break;
@@ -292,5 +644,5 @@ void action()
 
 void thanks()
 {
-    cout << setw(consoleWidth - 1) << left << "*感谢你的使用" << "*" << endl;
+    print_line("感谢你的使用");
 }

@@ -14,9 +14,11 @@ public:
     void output(std::ostream &os, int parentPriority) const;
     bool random();
     bool random(std::string oper);
+    bool random(std::string oper,short mode);
+    bool random(long difficulty);
     bool random(int max);
+    bool random(short mode);
     bool random(std::string oper,int max);
-    void printline(std::ostream &os);
     calulation(int ileft, char iop, int iright);
     calulation(calulation ileft, char iop, calulation iright);
     ~calulation();
@@ -25,8 +27,11 @@ public:
     long double getleftValue();
     long double getrightValue();
     void random_left();
+    void random_left(int current_chance, int max_value);
     void random_right();
+    void random_right(int current_chance, int max_value);
     int get_result();
+    int get_difficulty_params_for_child(int current_chance,int max_value);
     std::string get_string() const;
     
 

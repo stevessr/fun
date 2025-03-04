@@ -2,11 +2,7 @@
 #include "caculator.h"
 #include <string>
 #include <random>
-#include <ctime>
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#include <windows.h>
-#endif
+#include <iostream>
 
 const short chance = 6;
 const short max_member = 10;
@@ -14,6 +10,44 @@ extern int consoleWidth, consoleHeight;
 const int max_target = 1000;
 
 extern int mems;
+
+// Independent Difficulty Control Function
+void get_difficulty_params(int difficulty, int &current_chance, int &max_value)
+{
+    if (difficulty < 1 || difficulty > 5)
+    {
+        std::cerr << "Invalid difficulty level. Setting to default (3)." << std::endl;
+        difficulty = 3; // Default difficulty
+    }
+
+    switch (difficulty)
+    {
+    case 1:
+        current_chance = 1;
+        max_value = 100;
+        break;
+    case 2:
+        current_chance = 3;
+        max_value = 500;
+        break;
+    case 3:
+        current_chance = chance;
+        max_value = 1000;
+        break;
+    case 4:
+        current_chance = chance + 2;
+        max_value = 2000;
+        break;
+    case 5:
+        current_chance = chance + 4;
+        max_value = 3000;
+        break;
+    default:
+        current_chance = chance;
+        max_value = 1000;
+        break;
+    }
+}
 
 auto safe_delete = [](void *ptr, bool is_calculation)
 {
@@ -30,6 +64,51 @@ auto get_custom_string = [](void *ptr, bool is_calculation) -> std::string
     return is_calculation ? static_cast<calulation *>(ptr)->get_string()
                           : std::to_string(*static_cast<int *>(ptr));
 };
+
+// New random Function
+bool calulation::random(long difficulty)
+{
+    int current_chance, max_value;
+    get_difficulty_params(difficulty, current_chance, max_value);
+
+    // Use the difficulty-specific parameters in random_left and random_right
+    random_left(current_chance, max_value);
+    random_right(current_chance, max_value);
+
+    switch (rand() % 4)
+    {
+    case 0:
+        op = '+';
+        result = getleftValue() + getrightValue();
+        break;
+    case 1:
+        op = '-';
+        result = getleftValue() - getrightValue();
+        break;
+    case 2:
+        op = '*';
+        result = getleftValue() * getrightValue();
+        break;
+    case 3:
+        op = '/';
+        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        {
+            random_left(current_chance, max_value);
+            random_right(current_chance, max_value);
+        }
+        result = getleftValue() / getrightValue();
+        break;
+    default:
+        op = '+';
+        result = getleftValue() + getrightValue();
+        break;
+    }
+    if (result > max_target || result < -max_target)
+    {
+        random(difficulty);
+    }
+    return true;
+}
 
 bool calulation::random()
 {
@@ -51,6 +130,11 @@ bool calulation::random()
         break;
     case 3:
         op = '/';
+        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        {
+            random_left();
+            random_right();
+        }
         result = getleftValue() / getrightValue();
         break;
     default:
@@ -79,7 +163,7 @@ bool calulation::random(std::string oper)
         op = '+';
         result = getleftValue() + getrightValue();
     }
-    else if (oper == "3")
+    else if (oper == "2")
     {
         op = '-';
         result = getleftValue() - getrightValue();
@@ -93,9 +177,95 @@ bool calulation::random(std::string oper)
     {
 
         op = '/';
+        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        {
+            right = new int(rand() % 1000);
+            left = new int(rand() % 1000);
+        }
         result = getleftValue() / getrightValue();
     }
     else
+    {
+        random();
+    }
+    return true;
+}
+
+bool calulation::random(std::string oper, short mode)
+{
+
+    safe_delete(left, leftIsCalculation);
+    safe_delete(right, rightIsCalculation);
+    rightIsCalculation = false;
+    right = new int(rand() % 1000);
+    leftIsCalculation = false;
+    left = new int(rand() % 1000);
+    if (oper == "1")
+    {
+        op = '+';
+        result = getleftValue() + getrightValue();
+    }
+    else if (oper == "2")
+    {
+        op = '-';
+        result = getleftValue() - getrightValue();
+    }
+    else if (oper == "3")
+    {
+        op = '*';
+        result = getleftValue() * getrightValue();
+    }
+    else if (oper == "4")
+    {
+
+        op = '/';
+        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        {
+            right = new int(rand() % 1000);
+            left = new int(rand() % 1000);
+        }
+        result = getleftValue() / getrightValue();
+    }
+    else
+    {
+        random(mode);
+    }
+    return true;
+}
+
+bool calulation::random(short mode)
+{
+    random_left();
+    random_right();
+    switch (rand() % 4)
+    {
+    case 0:
+        op = '+';
+        result = getleftValue() + getrightValue();
+        break;
+    case 1:
+        op = '-';
+        result = getleftValue() - getrightValue();
+        break;
+    case 2:
+        op = '*';
+        result = getleftValue() * getrightValue();
+        break;
+    case 3:
+        op = '/';
+        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        {
+            random_left();
+            random_right();
+        }
+        result = getleftValue() / getrightValue();
+        break;
+    default:
+        op = '+';
+        result = getleftValue() + getrightValue();
+        break;
+    }
+    if (result > max_target || result < -max_target)
     {
         random();
     }
@@ -119,33 +289,6 @@ bool calulation::random(std::string oper, int max)
     } while (result > max || result < -max);
     return true;
 }
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-// 获取当前控制台的宽度和高度 windows only
-void calulation::printline(std::ostream &os)
-{
-    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
-    GetConsoleScreenBufferInfo(console, &bufferInfo);
-    consoleWidth = bufferInfo.dwSize.X;
-    consoleHeight = bufferInfo.dwSize.Y;
-    for (int i = 0; i < consoleWidth; i++)
-    {
-        os << "*";
-    }
-    os << std::endl;
-}
-#else
-void calulation::printline(std::ostream &os)
-{
-    consoleWidth = 40;
-    for (int i = 0; i < 20; i++)
-    {
-        os << "*";
-    }
-    os << std::endl;
-}
-#endif
 
 int getOperatorPriority(char op)
 {
@@ -267,7 +410,24 @@ long double calulation::getrightValue()
         return static_cast<long double>(*((int *)right));
     }
 }
-
+// new random_left Function
+void calulation::random_left(int current_chance, int max_value)
+{
+    safe_delete(left, leftIsCalculation);
+    if (rand() % current_chance == 0 && mems < max_member)
+    {
+        leftIsCalculation = true;
+        left = new calulation();
+        ((calulation *)left)->random(get_difficulty_params_for_child(current_chance, max_value));
+        mems++;
+    }
+    else
+    {
+        leftIsCalculation = false;
+        left = new int(rand() % max_value);
+    }
+}
+// original random_left Function
 void calulation::random_left()
 {
     safe_delete(left, leftIsCalculation);
@@ -276,6 +436,7 @@ void calulation::random_left()
         leftIsCalculation = true;
         left = new calulation();
         ((calulation *)left)->random();
+        mems++;
     }
     else
     {
@@ -283,7 +444,24 @@ void calulation::random_left()
         left = new int(rand() % 1000);
     }
 }
-
+// new random_right Function
+void calulation::random_right(int current_chance, int max_value)
+{
+    safe_delete(right, rightIsCalculation);
+    if (rand() % current_chance == 0 && mems < max_member)
+    {
+        rightIsCalculation = true;
+        right = new calulation();
+        ((calulation *)right)->random(get_difficulty_params_for_child(current_chance, max_value));
+        mems++;
+    }
+    else
+    {
+        rightIsCalculation = false;
+        right = new int(rand() % max_value);
+    }
+}
+// original random_right Function
 void calulation::random_right()
 {
     safe_delete(right, rightIsCalculation);
@@ -292,12 +470,27 @@ void calulation::random_right()
         rightIsCalculation = true;
         right = new calulation();
         ((calulation *)right)->random();
+        mems++;
     }
     else
     {
         rightIsCalculation = false;
         right = new int(rand() % 1000);
     }
+}
+// new function
+int calulation::get_difficulty_params_for_child(int current_chance, int max_value)
+{
+    int temp_current_chance, temp_max_value;
+    for (int i = 1; i <= 5; i++)
+    {
+        get_difficulty_params(i, temp_current_chance, temp_max_value);
+        if (current_chance == temp_current_chance && max_value == temp_max_value)
+        {
+            return i;
+        }
+    }
+    return 3;
 }
 
 int calulation::get_result()

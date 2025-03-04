@@ -1,8 +1,7 @@
-#include "process.cpp"
+#include "process.h"
 int main()
 {
     introduction();
-    mode_get();
     action();
     thanks();
     after_finish();
