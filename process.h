@@ -1,3 +1,4 @@
+//process.h
 #ifndef PROCESS_H
 #define PROCESS_H
 
@@ -11,10 +12,10 @@ extern calulation c;
 extern short mode;
 extern std::string temp;
 extern std::string save;
+extern std::string pass;
+extern std::stringstream temps;
 extern int mems;
 extern int input;
-extern std::stringstream temps;
-extern short pass;
 
 // 函数声明
 

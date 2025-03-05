@@ -1,3 +1,4 @@
+//process.cpp
 #include <iostream>
 #include <iomanip>
 #include <chrono>
@@ -12,10 +13,9 @@ calulation c;
 string temp = "";
 string save = "";
 string pass = "";
+stringstream temps;
 int mems;
 int input = 0;
-stringstream temps;
-short ensure_int = 0;
 short mode = 0;
 
 void introduction()
@@ -125,7 +125,6 @@ void game()
     double towait = 0;
 
     auto start = std::chrono::high_resolution_clock::now();
-    cin >> towait;
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     auto action2 = [&action, &start, &end, &duration, &towait]()
@@ -196,7 +195,7 @@ void game()
         cout << "*";
         cout << c;
         cout << "=" << endl;
-        input_line("请输入答案(取整数部分)：");
+        input_line("请输入答案：");
         start = std::chrono::high_resolution_clock::now();
         cin >> temp;
         end = chrono::high_resolution_clock::now();
@@ -309,14 +308,7 @@ void pratise()
         }
         else if (pass == "2")
         {
-            if (ensure_int == 0)
-            {
-                action = 1;
-            }
-            else
-            {
-                action = 5;
-            }
+            action = 1;
         }
         else
         {
@@ -324,30 +316,7 @@ void pratise()
             cin >> pass;
         }
     };
-    auto action5_2 = [&action]()
-    {
-        if (temp == "4" || temp == "5" && ensure_int == 0)
-        {
-            string str;
-            input_line("是否开启除法保底（保证除法一定整除）（1、是，2、否）:");
-            cin >> str;
-            if (str == "1")
-            {
-                ensure_int = 1;
-            }
-            else if (str == "2")
-            {
-                ensure_int = 2;
-            }
-            else
-            {
-                input_line("输入错误，请重新输入:");
-                cin >> str;
-            }
-            action = 3;
-        }
-    };
-    auto action5 = [&action, &action5_2]()
+    auto action5 = [&action]()
     {
         if (temp == "q")
         {
@@ -416,18 +385,11 @@ void pratise()
     auto action10 = [&action, &duration, &end, &start]()
     {
         printline();
-        if (ensure_int == 1)
-        {
-            c.random(save);
-        }
-        else
-        {
-            c.random(save,2);
-        }
+        c.random(save);
         cout << "*";
         cout << c;
         cout << "=" << endl;
-        input_line("请输入答案(取整数部分,输入q退出)：");
+        input_line("请输入答案(输入q退出)：");
         start = std::chrono::high_resolution_clock::now();
         cin >> temp;
         end = chrono::high_resolution_clock::now();
@@ -515,7 +477,7 @@ void pratise()
         for (int i = 0; i < wrong.size(); i++)
         {
             input_line(wrong[i].first);
-            input_line("请输入答案(取整数部分,输入q退出)：");
+            input_line("请输入答案(输入q退出)：");
             start = std::chrono::high_resolution_clock::now();
             cin >> temp;
             end = chrono::high_resolution_clock::now();
