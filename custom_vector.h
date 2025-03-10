@@ -21,7 +21,7 @@ public:
     void push_back(_custom_type value);
     void push_front(_custom_type value);
     void insert(size_t offset, _custom_type value);
-    void find(_custom_type value, size_t offset = 0);
+    size_t find(_custom_type value, size_t offset = 0);
     void earse(size_t offset);
     friend std::ostream &operator<<(std::ostream &os, custom_vector &v);
     friend std::istream &operator>>(std::istream &is, custom_vector &v);
