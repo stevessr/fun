@@ -423,7 +423,12 @@ void pratise()
         {
             print_line("答案错误，正确答案为" + to_string(int(c.result)));
             wrong.push_back({c.get_string(), int(c.result)});
-            action = 12;
+            action = 10;
+            towait--;
+            if (towait == 0)
+            {
+                action = 12;
+            }
         }
     };
 
@@ -431,7 +436,7 @@ void pratise()
     {
         printline();
         print_line("累计成功" + to_string(a) + "次");
-        print_line("成功率" + to_string(a * 1.0 / tars) + "%");
+        print_line("成功率" + to_string(a * 100.0 / tars) + "%");
         print_line("总共" + to_string(tars) + "题");
         printline();
         if (wrong.size() != 0)
@@ -476,7 +481,7 @@ void pratise()
         clear_screen();
         for (int i = 0; i < wrong.size(); i++)
         {
-            input_line(wrong[i].first);
+            print_line(wrong[i].first);
             input_line("请输入答案(输入q退出)：");
             start = std::chrono::high_resolution_clock::now();
             cin >> temp;

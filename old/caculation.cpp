@@ -1,4 +1,4 @@
-//caculation.cpp
+// caculation.cpp
 #pragma once
 #include "caculator.h"
 #include <string>
@@ -92,7 +92,7 @@ bool calulation::random(long difficulty)
         break;
     case 3:
         op = '/';
-        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        while (getleftValue() == 0 || getrightValue() == 0 || int(getleftValue()) % int(getrightValue()) != 0)
         {
             random_left(current_chance, max_value);
             random_right(current_chance, max_value);
@@ -131,7 +131,7 @@ bool calulation::random()
         break;
     case 3:
         op = '/';
-        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        while (getleftValue() == 0 || getrightValue() == 0 || int(getleftValue()) % int(getrightValue()) != 0)
         {
             random_left();
             random_right();
@@ -178,7 +178,7 @@ bool calulation::random(std::string oper)
     {
 
         op = '/';
-        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        while (getleftValue() == 0 || getrightValue() == 0 || int(getleftValue()) % int(getrightValue()) != 0)
         {
             right = new int(rand() % 1000);
             left = new int(rand() % 1000);
@@ -220,7 +220,7 @@ bool calulation::random(std::string oper, short mode)
     {
 
         op = '/';
-        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        while (getleftValue() == 0 || getrightValue() == 0 || int(getleftValue()) % int(getrightValue()) != 0)
         {
             right = new int(rand() % 1000);
             left = new int(rand() % 1000);
@@ -254,7 +254,7 @@ bool calulation::random(short mode)
         break;
     case 3:
         op = '/';
-        while (int(getleftValue()) % int(getrightValue()) != 0 || getleftValue() == 0 || getrightValue() == 0)
+        while (getleftValue() == 0 || getrightValue() == 0 || int(getleftValue()) % int(getrightValue()) != 0)
         {
             random_left();
             random_right();
@@ -337,12 +337,12 @@ void calulation::output(std::ostream &os, int parentPriority) const
 
     if (leftIsCalculation)
     {
-        if (currentPriority < parentPriority)
+        if (get_op() != ((calulation *)left)->get_op())
         {
             os << "(";
         }
         ((calulation *)left)->output(os, currentPriority);
-        if (currentPriority < parentPriority)
+        if (get_op() != ((calulation *)left)->get_op())
         {
             os << ")";
         }
@@ -355,12 +355,12 @@ void calulation::output(std::ostream &os, int parentPriority) const
 
     if (rightIsCalculation)
     {
-        if (currentPriority <= parentPriority)
+        if (get_op() != ((calulation *)right)->get_op())
         {
             os << "(";
         }
         ((calulation *)right)->output(os, currentPriority);
-        if (currentPriority <= parentPriority)
+        if (get_op() != ((calulation *)right)->get_op())
         {
             os << ")";
         }
@@ -369,6 +369,11 @@ void calulation::output(std::ostream &os, int parentPriority) const
     {
         os << *(int *)right;
     }
+}
+
+char calulation::get_op() const
+{
+    return op;
 }
 
 calulation::~calulation()

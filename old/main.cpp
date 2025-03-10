@@ -1,7 +1,7 @@
 //main.cpp
 #include "process.h"
 int main()
-{
+{   
     introduction();
     action();
     thanks();

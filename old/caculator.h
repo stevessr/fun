@@ -34,6 +34,7 @@ public:
     int get_result();
     int get_difficulty_params_for_child(int current_chance,int max_value);
     std::string get_string() const;
+    char get_op() const;
     
 
 private:
