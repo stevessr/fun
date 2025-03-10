@@ -1,5 +1,5 @@
 @echo off
-chop 65001
+chcp 65001
 cd build
 cd Debug
 cmd
