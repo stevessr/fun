@@ -165,11 +165,39 @@ _custom_type custom_vector::sum(size_t begin, size_t end)
     {
         throw std::out_of_range("out of range");
     }
-    while(begin<=end){
+    while (begin <= end)
+    {
         all += data[begin++];
     }
     return all;
 }
+_custom_type custom_vector::sum(custom_vector &v)
+{
+    _custom_type all = 0;
+    for (size_t i = 0; i < v.size; i++)
+    {
+        all += data[v[i]];
+    }
+    return all;
+}
 
+custom_vector::custom_vector(const custom_vector &cv)
+{
+    size = cv.size;
+    capacity = cv.capacity;
+    data = new _custom_type[capacity];
+    for (size_t i = 0; i < size; i++)
+    {
+        data[i] = cv.data[i];
+    }
+}
+
+custom_vector::custom_vector(custom_vector &&cv): data(cv.data), size(cv.size), capacity(cv.capacity)
+{
+    // “窃取” cv 的资源
+    cv.data = nullptr;
+    cv.size = 0;
+    cv.capacity = 0;
+}
 #undef _custom_type
 #endif

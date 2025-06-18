@@ -1,0 +1,52 @@
+# Build artifacts
+target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (except what we copy explicitly)
+*.md
+!README.md
+!CHANGELOG.md
+
+# Scripts
+*.ps1
+*.sh
+*.bat
+
+# Old files and directories
+old/
+former/
+ssav/
+custom/
+build/
+node_modules/
+
+# JavaScript/Python files
+*.js
+*.py
+*.cpp
+*.h
+*.doc
+
+# JSON files
+*.json
+!package.json
+
+# Other
+releases/
+.env
+.env.local

@@ -1,2 +1,4 @@
-build/Debug/main.o
-build/Debug/outDebug.exe
+*.txt
+node_modules
+target
+releases/

@@ -15,6 +15,9 @@ class custom_vector
 {
 public:
     custom_vector() : data(nullptr), size(0), capacity(0) {}
+    custom_vector(const custom_vector &cv);
+    custom_vector(custom_vector &&cv);
+    ~custom_vector(){ delete[] data; }
     custom_vector operator= (const custom_vector & right);
     _custom_type operator[](size_t offset);
     void sort();
@@ -26,6 +29,7 @@ public:
     size_t find(_custom_type value, size_t offset = 0);
     void erase(size_t offset);
     _custom_type sum(size_t begin,size_t end);
+    _custom_type sum(custom_vector &v);
     friend std::ostream &operator<<(std::ostream &os, custom_vector &v);
     friend std::istream &operator>>(std::istream &is, custom_vector &v);
     _custom_type * begin();
