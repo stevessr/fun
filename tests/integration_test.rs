@@ -1,5 +1,4 @@
 use anyhow::Result;
-use serde_json;
 use std::time::Duration;
 use tokio::time::timeout;
 
@@ -119,7 +118,7 @@ async fn test_request_id_generation() -> Result<()> {
             char::from(b'a' + random_byte)
         })
         .collect();
-    let request_id = format!("{}_{}", timestamp, random_part);
+    let request_id = format!("{timestamp}_{random_part}");
 
     // Verify format
     assert!(request_id.contains('_'));
@@ -133,7 +132,7 @@ async fn test_request_id_generation() -> Result<()> {
             char::from(b'a' + random_byte)
         })
         .collect();
-    let request_id2 = format!("{}_{}", timestamp2, random_part2);
+    let request_id2 = format!("{timestamp2}_{random_part2}");
 
     assert_ne!(request_id, request_id2);
 
@@ -148,7 +147,7 @@ async fn test_logging_service_format() -> Result<()> {
     let message = "Test message";
 
     let timestamp = chrono::Utc::now().to_rfc3339();
-    let formatted = format!("[{}] {} [{}] - {}", level, timestamp, service_name, message);
+    let formatted = format!("[{level}] {timestamp} [{service_name}] - {message}");
 
     assert!(formatted.contains("INFO"));
     assert!(formatted.contains("TestService"));

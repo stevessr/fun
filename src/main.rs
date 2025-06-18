@@ -1,12 +1,14 @@
 use anyhow::Result;
 use bytes::Bytes;
 use chrono::Utc;
+use clap::Parser;
 use dashmap::DashMap;
 use futures_util::{SinkExt, StreamExt};
 
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
+    env,
     net::SocketAddr,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -20,6 +22,25 @@ use tokio::{
 };
 use tokio_tungstenite::{accept_async, tungstenite::Message as WsMessage};
 use warp::Filter;
+
+// 命令行参数配置 (Command Line Arguments Configuration)
+#[derive(Parser, Debug)]
+#[command(name = "dark-server")]
+#[command(about = "A high-performance HTTP-to-WebSocket proxy server")]
+#[command(version = "1.0.0")]
+pub struct Args {
+    /// HTTP server port
+    #[arg(short = 'p', long = "http-port", default_value_t = 8889)]
+    pub http_port: u16,
+
+    /// WebSocket server port
+    #[arg(short = 'w', long = "ws-port", default_value_t = 9998)]
+    pub ws_port: u16,
+
+    /// Server host address
+    #[arg(short = 'H', long = "host", default_value = "0.0.0.0")]
+    pub host: String,
+}
 
 // 日志记录器模块 (Logging Service Module)
 #[derive(Clone)]
@@ -167,6 +188,12 @@ pub struct StreamEndMessage {
     pub message_type: String,
 }
 
+impl Default for StreamEndMessage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StreamEndMessage {
     pub fn new() -> Self {
         Self {
@@ -194,7 +221,7 @@ impl ConnectionRegistry {
     pub async fn add_connection(&self, sender: mpsc::UnboundedSender<String>, client_info: &str) {
         let mut connections = self.connections.write().await;
         connections.push(sender);
-        self.logger.info(&format!("新客户端连接: {}", client_info));
+        self.logger.info(&format!("新客户端连接: {client_info}"));
     }
 
     pub async fn remove_connection(&self, _sender: &mpsc::UnboundedSender<String>) {
@@ -221,7 +248,7 @@ impl ConnectionRegistry {
                     self.route_message(parsed_message, queue.value()).await;
                 } else {
                     self.logger
-                        .warn(&format!("收到未知请求ID的消息: {}", request_id));
+                        .warn(&format!("收到未知请求ID的消息: {request_id}"));
                 }
             }
             Err(_) => {
@@ -300,7 +327,7 @@ impl RequestHandler {
         let method = req.method().to_string();
         let path = req.uri().path().to_string();
 
-        self.logger.info(&format!("处理请求: {} {}", method, path));
+        self.logger.info(&format!("处理请求: {method} {path}"));
 
         if !self.connection_registry.has_active_connections().await {
             return self.send_error_response(503, "没有可用的浏览器连接");
@@ -345,7 +372,7 @@ impl RequestHandler {
                 char::from(b'a' + random_byte)
             })
             .collect();
-        format!("{}_{}", timestamp, random_part)
+        format!("{timestamp}_{random_part}")
     }
 
     fn build_proxy_request(
@@ -412,7 +439,7 @@ impl RequestHandler {
             ClientMessage::Error {
                 status, message, ..
             } => {
-                return self.send_error_response(status.unwrap_or(500), &message);
+                self.send_error_response(status.unwrap_or(500), &message)
             }
             ClientMessage::ResponseHeaders {
                 status, headers, ..
@@ -434,7 +461,7 @@ impl RequestHandler {
                         }
                         Ok(ClientMessage::Error { message, .. }) => {
                             self.logger
-                                .warn(&format!("Stream interrupted by error: {}", message));
+                                .warn(&format!("Stream interrupted by error: {message}"));
                             break;
                         }
                         Err(e) => {
@@ -469,8 +496,8 @@ impl RequestHandler {
         if error.to_string().contains("timeout") {
             self.send_error_response(504, "请求超时")
         } else {
-            self.logger.error(&format!("请求处理错误: {}", error));
-            self.send_error_response(500, &format!("代理错误: {}", error))
+            self.logger.error(&format!("请求处理错误: {error}"));
+            self.send_error_response(500, &format!("代理错误: {error}"))
         }
     }
 
@@ -506,6 +533,33 @@ impl Default for ServerConfig {
             http_port: 8889,
             ws_port: 9998,
             host: "0.0.0.0".to_string(),
+        }
+    }
+}
+
+impl From<Args> for ServerConfig {
+    fn from(mut args: Args) -> Self {
+        // Override with environment variables if present
+        if let Ok(port) = env::var("HTTP_PORT") {
+            if let Ok(parsed_port) = port.parse::<u16>() {
+                args.http_port = parsed_port;
+            }
+        }
+
+        if let Ok(port) = env::var("WS_PORT") {
+            if let Ok(parsed_port) = port.parse::<u16>() {
+                args.ws_port = parsed_port;
+            }
+        }
+
+        if let Ok(host) = env::var("HOST") {
+            args.host = host;
+        }
+
+        Self {
+            http_port: args.http_port,
+            ws_port: args.ws_port,
+            host: args.host,
         }
     }
 }
@@ -590,7 +644,7 @@ impl ProxyServerSystem {
 
         let addr: SocketAddr = format!("{}:{}", self.config.host, self.config.http_port).parse()?;
         self.logger
-            .info(&format!("HTTP服务器启动: http://{}", addr));
+            .info(&format!("HTTP服务器启动: http://{addr}"));
 
         warp::serve(routes).run(addr).await;
         Ok(())
@@ -601,7 +655,7 @@ impl ProxyServerSystem {
         let listener = tokio::net::TcpListener::bind(&addr).await?;
 
         self.logger
-            .info(&format!("WebSocket服务器启动: ws://{}", addr));
+            .info(&format!("WebSocket服务器启动: ws://{addr}"));
 
         while let Ok((stream, addr)) = listener.accept().await {
             let registry = self.connection_registry.clone();
@@ -611,7 +665,7 @@ impl ProxyServerSystem {
                 if let Err(e) =
                     Self::handle_websocket_connection(stream, addr, registry, logger).await
                 {
-                    eprintln!("WebSocket connection error: {}", e);
+                    eprintln!("WebSocket connection error: {e}");
                 }
             });
         }
@@ -636,7 +690,7 @@ impl ProxyServerSystem {
         // Spawn task to handle outgoing messages
         tokio::spawn(async move {
             while let Some(message) = rx.recv().await {
-                if let Err(_) = ws_sender.send(WsMessage::Text(message)).await {
+                if (ws_sender.send(WsMessage::Text(message)).await).is_err() {
                     break;
                 }
             }
@@ -661,20 +715,33 @@ impl ProxyServerSystem {
 }
 
 // 启动函数 (Initialization Function)
-pub async fn initialize_server() -> Result<()> {
-    let server_system = ProxyServerSystem::new(None);
+pub async fn initialize_server(config: Option<ServerConfig>) -> Result<()> {
+    let server_system = ProxyServerSystem::new(config);
     server_system.start().await
 }
 
 // 主函数 (Main Function)
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Parse command line arguments
+    let args = Args::parse();
+
     // Initialize logging
     tracing_subscriber::fmt::init();
 
+    // Create server configuration from arguments
+    let config = ServerConfig::from(args);
+
+    // Print configuration information
+    println!("启动代理服务器配置:");
+    println!("  HTTP 端口: {}", config.http_port);
+    println!("  WebSocket 端口: {}", config.ws_port);
+    println!("  监听地址: {}", config.host);
+    println!();
+
     // Start the server
-    if let Err(e) = initialize_server().await {
-        eprintln!("服务器启动失败: {}", e);
+    if let Err(e) = initialize_server(Some(config)).await {
+        eprintln!("服务器启动失败: {e}");
         std::process::exit(1);
     }
 

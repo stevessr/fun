@@ -96,34 +96,106 @@ The server uses the following default configuration:
 ```rust
 ServerConfig {
     http_port: 8889,     // HTTP proxy server port
-    ws_port: 9998,       // WebSocket server port  
+    ws_port: 9998,       // WebSocket server port
     host: "0.0.0.0",     // Bind address
 }
 ```
+
+### Command Line Arguments
+
+You can configure the server using command line arguments:
+
+```bash
+# Show help
+dark-server --help
+
+# Custom ports and host
+dark-server --http-port 8080 --ws-port 9090 --host 127.0.0.1
+
+# Short form
+dark-server -p 8080 -w 9090 -H 127.0.0.1
+```
+
+Available options:
+- `-p, --http-port <PORT>`: HTTP server port (default: 8889)
+- `-w, --ws-port <PORT>`: WebSocket server port (default: 9998)
+- `-H, --host <HOST>`: Server host address (default: 0.0.0.0)
+- `-h, --help`: Print help information
+- `-V, --version`: Print version information
 
 ### Environment Variables
 
 You can override default settings using environment variables:
 
 ```bash
-export DARK_SERVER_HTTP_PORT=8889
-export DARK_SERVER_WS_PORT=9998
-export DARK_SERVER_HOST="0.0.0.0"
+# Unix/Linux/macOS
+export HTTP_PORT=8080
+export WS_PORT=9090
+export HOST="127.0.0.1"
+dark-server
+
+# Windows Command Prompt
+set HTTP_PORT=8080
+set WS_PORT=9090
+set HOST=127.0.0.1
+dark-server.exe
+
+# Windows PowerShell
+$env:HTTP_PORT="8080"
+$env:WS_PORT="9090"
+$env:HOST="127.0.0.1"
+.\dark-server.exe
 ```
+
+**Priority Order**: Command line arguments override environment variables, which override default values.
 
 ## 🚦 Usage
 
 ### Starting the Server
 
 ```bash
-# Development mode
+# Development mode with default settings
 cargo run
 
 # Production mode (optimized)
 cargo run --release
 
-# With custom configuration
-DARK_SERVER_HTTP_PORT=8080 cargo run
+# With command line arguments
+cargo run -- --http-port 8080 --ws-port 9090 --host 127.0.0.1
+
+# With environment variables
+HTTP_PORT=8080 WS_PORT=9090 HOST=127.0.0.1 cargo run
+
+# Using pre-built binary
+./dark-server --http-port 8080 --ws-port 9090
+
+# Windows
+dark-server.exe -p 8080 -w 9090 -H 127.0.0.1
+```
+
+### Configuration Examples
+
+```bash
+# Default configuration
+dark-server
+# HTTP: http://0.0.0.0:8889, WebSocket: ws://0.0.0.0:9998
+
+# Custom ports
+dark-server --http-port 3000 --ws-port 3001
+# HTTP: http://0.0.0.0:3000, WebSocket: ws://0.0.0.0:3001
+
+# Localhost only
+dark-server --host 127.0.0.1
+# HTTP: http://127.0.0.1:8889, WebSocket: ws://127.0.0.1:9998
+
+# Environment variables (Unix)
+export HTTP_PORT=8080
+export WS_PORT=9090
+export HOST=localhost
+dark-server
+
+# Environment variables (Windows)
+set HTTP_PORT=8080 && set WS_PORT=9090 && set HOST=localhost && dark-server.exe
 ```
 
 ### Client Integration
