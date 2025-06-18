@@ -438,9 +438,7 @@ impl RequestHandler {
         match header_message {
             ClientMessage::Error {
                 status, message, ..
-            } => {
-                self.send_error_response(status.unwrap_or(500), &message)
-            }
+            } => self.send_error_response(status.unwrap_or(500), &message),
             ClientMessage::ResponseHeaders {
                 status, headers, ..
             } => {
@@ -643,8 +641,7 @@ impl ProxyServerSystem {
             );
 
         let addr: SocketAddr = format!("{}:{}", self.config.host, self.config.http_port).parse()?;
-        self.logger
-            .info(&format!("HTTP服务器启动: http://{addr}"));
+        self.logger.info(&format!("HTTP服务器启动: http://{addr}"));
 
         warp::serve(routes).run(addr).await;
         Ok(())
