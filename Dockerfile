@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
-FROM rust:1.75-slim AS builder
+FROM rust:1.82-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,8 +16,8 @@ WORKDIR /app
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
-# Create a dummy main.rs to build dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+# Create a dummy main.rs that references all dependencies to ensure they're built
+RUN mkdir src && echo 'use anyhow::Result; use bytes::Bytes; use chrono::Utc; use clap::Parser; use dashmap::DashMap; use futures_util::{SinkExt, StreamExt}; use serde::{Deserialize, Serialize}; use std::{collections::HashMap, env, net::SocketAddr, sync::{atomic::{AtomicBool, Ordering}, Arc}, time::Duration}; use tokio::{sync::{mpsc, oneshot, RwLock}, time::timeout}; use tokio_tungstenite::{accept_async, tungstenite::Message as WsMessage}; use warp::Filter; use uuid::Uuid; use rand::random; use thiserror::Error; use tracing::{info, error}; fn main() { println!("Dummy main for dependency building"); }' > src/main.rs
 
 # Build dependencies (this layer will be cached)
 RUN cargo build --release && rm -rf src
@@ -25,8 +25,8 @@ RUN cargo build --release && rm -rf src
 # Copy source code
 COPY src ./src
 
-# Build the application
-RUN cargo build --release
+# Build the application (force rebuild by touching main.rs)
+RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
 FROM debian:bookworm-slim
