@@ -18,10 +18,7 @@ use tokio::{
     sync::{mpsc, oneshot, RwLock},
     time::timeout,
 };
-use tokio_tungstenite::{
-    accept_async,
-    tungstenite::Message as WsMessage,
-};
+use tokio_tungstenite::{accept_async, tungstenite::Message as WsMessage};
 use warp::Filter;
 
 // 日志记录器模块 (Logging Service Module)
@@ -39,7 +36,10 @@ impl LoggingService {
 
     fn format_message(&self, level: &str, message: &str) -> String {
         let timestamp = Utc::now().to_rfc3339();
-        format!("[{}] {} [{}] - {}", level, timestamp, self.service_name, message)
+        format!(
+            "[{}] {} [{}] - {}",
+            level, timestamp, self.service_name, message
+        )
     }
 
     pub fn info(&self, message: &str) {
@@ -220,7 +220,8 @@ impl ConnectionRegistry {
                 if let Some(queue) = self.message_queues.get(&request_id) {
                     self.route_message(parsed_message, queue.value()).await;
                 } else {
-                    self.logger.warn(&format!("收到未知请求ID的消息: {}", request_id));
+                    self.logger
+                        .warn(&format!("收到未知请求ID的消息: {}", request_id));
                 }
             }
             Err(_) => {
@@ -246,9 +247,11 @@ impl ConnectionRegistry {
                 queue.enqueue(message).await;
             }
             ClientMessage::StreamClose { .. } => {
-                queue.enqueue(ClientMessage::StreamClose {
-                    request_id: self.get_request_id(&message)
-                }).await;
+                queue
+                    .enqueue(ClientMessage::StreamClose {
+                        request_id: self.get_request_id(&message),
+                    })
+                    .await;
             }
         }
     }
@@ -290,7 +293,10 @@ impl RequestHandler {
         }
     }
 
-    pub async fn process_request(&self, req: warp::http::Request<Bytes>) -> Result<warp::http::Response<String>> {
+    pub async fn process_request(
+        &self,
+        req: warp::http::Request<Bytes>,
+    ) -> Result<warp::http::Response<String>> {
         let method = req.method().to_string();
         let path = req.uri().path().to_string();
 
@@ -303,23 +309,29 @@ impl RequestHandler {
         let request_id = self.generate_request_id();
         let proxy_request = self.build_proxy_request(req, &request_id)?;
 
-        let message_queue = self.connection_registry.create_message_queue(request_id.clone());
+        let message_queue = self
+            .connection_registry
+            .create_message_queue(request_id.clone());
 
         match self.forward_request(proxy_request).await {
-            Ok(_) => {
-                match self.handle_response(message_queue, &request_id).await {
-                    Ok(response) => {
-                        self.connection_registry.remove_message_queue(&request_id).await;
-                        Ok(response)
-                    }
-                    Err(e) => {
-                        self.connection_registry.remove_message_queue(&request_id).await;
-                        self.handle_request_error(e)
-                    }
+            Ok(_) => match self.handle_response(message_queue, &request_id).await {
+                Ok(response) => {
+                    self.connection_registry
+                        .remove_message_queue(&request_id)
+                        .await;
+                    Ok(response)
                 }
-            }
+                Err(e) => {
+                    self.connection_registry
+                        .remove_message_queue(&request_id)
+                        .await;
+                    self.handle_request_error(e)
+                }
+            },
             Err(e) => {
-                self.connection_registry.remove_message_queue(&request_id).await;
+                self.connection_registry
+                    .remove_message_queue(&request_id)
+                    .await;
                 self.handle_request_error(e)
             }
         }
@@ -336,7 +348,11 @@ impl RequestHandler {
         format!("{}_{}", timestamp, random_part)
     }
 
-    fn build_proxy_request(&self, req: warp::http::Request<Bytes>, request_id: &str) -> Result<ProxyRequest> {
+    fn build_proxy_request(
+        &self,
+        req: warp::http::Request<Bytes>,
+        request_id: &str,
+    ) -> Result<ProxyRequest> {
         let method = req.method().to_string();
         let path = req.uri().path().to_string();
 
@@ -375,7 +391,9 @@ impl RequestHandler {
     async fn forward_request(&self, proxy_request: ProxyRequest) -> Result<()> {
         if let Some(connection) = self.connection_registry.get_first_connection().await {
             let message = serde_json::to_string(&proxy_request)?;
-            connection.send(message).map_err(|_| anyhow::anyhow!("Failed to send message"))?;
+            connection
+                .send(message)
+                .map_err(|_| anyhow::anyhow!("Failed to send message"))?;
             Ok(())
         } else {
             Err(anyhow::anyhow!("No active connections"))
@@ -391,16 +409,23 @@ impl RequestHandler {
         let header_message = message_queue.dequeue().await?;
 
         match header_message {
-            ClientMessage::Error { status, message, .. } => {
+            ClientMessage::Error {
+                status, message, ..
+            } => {
                 return self.send_error_response(status.unwrap_or(500), &message);
             }
-            ClientMessage::ResponseHeaders { status, headers, .. } => {
+            ClientMessage::ResponseHeaders {
+                status, headers, ..
+            } => {
                 // 设置响应头并处理流式数据
                 let mut response_body = String::new();
 
                 // 处理流式数据
                 loop {
-                    match message_queue.dequeue_with_timeout(Duration::from_secs(10)).await {
+                    match message_queue
+                        .dequeue_with_timeout(Duration::from_secs(10))
+                        .await
+                    {
                         Ok(ClientMessage::Chunk { data, .. }) => {
                             response_body.push_str(&data);
                         }
@@ -408,7 +433,8 @@ impl RequestHandler {
                             break;
                         }
                         Ok(ClientMessage::Error { message, .. }) => {
-                            self.logger.warn(&format!("Stream interrupted by error: {}", message));
+                            self.logger
+                                .warn(&format!("Stream interrupted by error: {}", message));
                             break;
                         }
                         Err(e) => {
@@ -421,7 +447,8 @@ impl RequestHandler {
                             }
                         }
                         _ => {
-                            self.logger.warn("Received unexpected message during stream");
+                            self.logger
+                                .warn("Received unexpected message during stream");
                         }
                     }
                 }
@@ -434,9 +461,7 @@ impl RequestHandler {
 
                 Ok(response.body(response_body)?)
             }
-            _ => {
-                self.send_error_response(500, "Invalid response format")
-            }
+            _ => self.send_error_response(500, "Invalid response format"),
         }
     }
 
@@ -449,7 +474,11 @@ impl RequestHandler {
         }
     }
 
-    fn send_error_response(&self, status: u16, message: &str) -> Result<warp::http::Response<String>> {
+    fn send_error_response(
+        &self,
+        status: u16,
+        message: &str,
+    ) -> Result<warp::http::Response<String>> {
         Ok(warp::http::Response::builder()
             .status(status)
             .body(message.to_string())?)
@@ -486,7 +515,10 @@ impl ProxyServerSystem {
         let config = config.unwrap_or_default();
         let logger = LoggingService::new("ProxyServer");
         let connection_registry = Arc::new(ConnectionRegistry::new(logger.clone()));
-        let request_handler = Arc::new(RequestHandler::new(connection_registry.clone(), logger.clone()));
+        let request_handler = Arc::new(RequestHandler::new(
+            connection_registry.clone(),
+            logger.clone(),
+        ));
 
         Self {
             config,
@@ -521,37 +553,44 @@ impl ProxyServerSystem {
             .and(warp::path::full())
             .and(warp::header::headers_cloned())
             .and(warp::body::bytes())
-            .and_then(move |method: warp::http::Method, path: warp::path::FullPath, headers: warp::http::HeaderMap, body: Bytes| {
-                let handler = request_handler.clone();
-                async move {
-                    let mut req_builder = warp::http::Request::builder()
-                        .method(method)
-                        .uri(path.as_str());
+            .and_then(
+                move |method: warp::http::Method,
+                      path: warp::path::FullPath,
+                      headers: warp::http::HeaderMap,
+                      body: Bytes| {
+                    let handler = request_handler.clone();
+                    async move {
+                        let mut req_builder = warp::http::Request::builder()
+                            .method(method)
+                            .uri(path.as_str());
 
-                    for (key, value) in headers.iter() {
-                        req_builder = req_builder.header(key, value);
-                    }
-
-                    let req = req_builder.body(body).map_err(|_| warp::reject::reject())?;
-
-                    match handler.process_request(req).await {
-                        Ok(response) => {
-                            let (parts, body) = response.into_parts();
-                            let mut builder = warp::http::Response::builder().status(parts.status);
-
-                            for (key, value) in parts.headers.iter() {
-                                builder = builder.header(key, value);
-                            }
-
-                            Ok::<_, warp::Rejection>(builder.body(body).unwrap())
+                        for (key, value) in headers.iter() {
+                            req_builder = req_builder.header(key, value);
                         }
-                        Err(_) => Err(warp::reject::reject()),
+
+                        let req = req_builder.body(body).map_err(|_| warp::reject::reject())?;
+
+                        match handler.process_request(req).await {
+                            Ok(response) => {
+                                let (parts, body) = response.into_parts();
+                                let mut builder =
+                                    warp::http::Response::builder().status(parts.status);
+
+                                for (key, value) in parts.headers.iter() {
+                                    builder = builder.header(key, value);
+                                }
+
+                                Ok::<_, warp::Rejection>(builder.body(body).unwrap())
+                            }
+                            Err(_) => Err(warp::reject::reject()),
+                        }
                     }
-                }
-            });
+                },
+            );
 
         let addr: SocketAddr = format!("{}:{}", self.config.host, self.config.http_port).parse()?;
-        self.logger.info(&format!("HTTP服务器启动: http://{}", addr));
+        self.logger
+            .info(&format!("HTTP服务器启动: http://{}", addr));
 
         warp::serve(routes).run(addr).await;
         Ok(())
@@ -561,14 +600,17 @@ impl ProxyServerSystem {
         let addr: SocketAddr = format!("{}:{}", self.config.host, self.config.ws_port).parse()?;
         let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-        self.logger.info(&format!("WebSocket服务器启动: ws://{}", addr));
+        self.logger
+            .info(&format!("WebSocket服务器启动: ws://{}", addr));
 
         while let Ok((stream, addr)) = listener.accept().await {
             let registry = self.connection_registry.clone();
             let logger = self.logger.clone();
 
             tokio::spawn(async move {
-                if let Err(e) = Self::handle_websocket_connection(stream, addr, registry, logger).await {
+                if let Err(e) =
+                    Self::handle_websocket_connection(stream, addr, registry, logger).await
+                {
                     eprintln!("WebSocket connection error: {}", e);
                 }
             });
